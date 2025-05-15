@@ -2,20 +2,16 @@ package src.json.commands;
 
 import src.json.JsonFileHandler;
 
-public class Validate implements Command {
+public class Create implements Command {
 
     JsonFileHandler jsonFileHandler;
 
-    public Validate(JsonFileHandler jsonFileHandler) {
+    public Create(JsonFileHandler jsonFileHandler) {
         this.jsonFileHandler = jsonFileHandler;
     }
 
     @Override
     public String execute(String[] args) {
-
-        if(args.length != 0)
-            return "Incorrect argument count";
-
-       return jsonFileHandler.validate();
+        return jsonFileHandler.create(args[0],args[1]);
     }
 }

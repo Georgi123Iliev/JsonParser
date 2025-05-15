@@ -2,22 +2,18 @@ package src.json.commands;
 
 import src.json.JsonFileHandler;
 
-public class Open implements Command {
+public class Close implements Command {
 
-    private JsonFileHandler jsonFileHandler;
+    JsonFileHandler jsonFileHandler;
 
-    public Open(JsonFileHandler jsonFileHandler) {
+    public Close(JsonFileHandler jsonFileHandler) {
         this.jsonFileHandler = jsonFileHandler;
     }
 
     @Override
     public String execute(String[] args) {
-
-        if(args.length!=1)
+        if(args.length != 0)
             return "Incorrect argument count";
-
-        return jsonFileHandler.openFile(args[0]);
-
-
+        return jsonFileHandler.close();
     }
 }

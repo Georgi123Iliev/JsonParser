@@ -1,11 +1,13 @@
 package src.json.Parsing;
 
+import src.json.types.JsonElement;
+
 public class JsonParseResult {
-    public Object parsedData;
+    public JsonElement parsedData;
     public String errorMessage;
     public int errorPosition;
 
-    public JsonParseResult(Object parsedData) {
+    public JsonParseResult(JsonElement parsedData) {
         this.parsedData = parsedData;
         this.errorMessage = null;
         this.errorPosition = -1;
