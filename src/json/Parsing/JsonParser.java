@@ -21,7 +21,8 @@ public class JsonParser {
         index = skipWhitespace(json, index);
 
         if (index != json.length()) {
-            return new JsonParseResult("Unexpected character at position " + index, index);
+            return new JsonParseResult("Unexpected character at position " + index + " before "
+                    + json.substring(index), index);
         }
         return new JsonParseResult(result);
     }
@@ -74,7 +75,7 @@ public class JsonParser {
             Object value = parseValue(json);
             list.add(value);
 
-
+            index = skipWhitespace(json, index);
 
             if (json.charAt(index) == ',') {
                 index++; // Skip ','
@@ -82,7 +83,7 @@ public class JsonParser {
                 return new JsonParseResult("Expected ',' or ']' at position " + index, index);
             }
 
-            index = skipWhitespace(json, index);
+
         }
 
         if (index >= json.length() || json.charAt(index) != ']') {
@@ -146,6 +147,7 @@ public class JsonParser {
         {
             char c = json.charAt(i);
 
+            String errorMessage = "Mismatched brace of type " + c + " at " + i + " before " + json.substring(i, Math.min(json.length(), i + 30));
             if(c == '}')
             {
                 if(braces.peek() == '{')
@@ -154,7 +156,7 @@ public class JsonParser {
                 }
                 else
                 {
-                    return new JsonParseResult("Mismatched brace of type " + c + " at " + i,i);
+                    return new JsonParseResult(errorMessage,i);
                 }
             }
             if( c == ']')
@@ -165,7 +167,7 @@ public class JsonParser {
                 }
                 else
                 {
-                    return new JsonParseResult("Mismatched brace of type " + c + " at " + i,i);
+                    return new JsonParseResult(errorMessage,i);
                 }
             }
 
@@ -179,7 +181,7 @@ public class JsonParser {
          return new JsonParseResult(new Object());
         else
         {
-               return new JsonParseResult("Unclosed brace"+braces.peek() +"at"+lastBraceIndex,lastBraceIndex);
+               return new JsonParseResult("Unclosed brace "+braces.peek() +" at "+lastBraceIndex + " before " +json.substring(lastBraceIndex,Math.min(json.length(),lastBraceIndex+30)),lastBraceIndex);
         }
     }
 

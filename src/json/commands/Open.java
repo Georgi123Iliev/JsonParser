@@ -10,8 +10,8 @@ public class Open implements ICommand {
         if(args.length!=1)
             return "Incorrect argument count";
 
-        jsonObject.OpenFile(args[0]);
+        return jsonObject.OpenFile(args[0]);
 
-        return "";
+
     }
 }
