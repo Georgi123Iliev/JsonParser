@@ -14,6 +14,7 @@ public class JsonParser {
     private static int index;
 
     private static final Pattern STRING_PATTERN = Pattern.compile("\"(\\\\.|[^\"])*\"");
+    private static final Pattern STRING_PATTERN2 = Pattern.compile("\"(\\\\.|[^'])*'");
     private static final Pattern NUMBER_PATTERN = Pattern.compile("-?\\d+(\\.\\d+)?([eE][+-]?\\d+)?");
     private static final Pattern BOOLEAN_PATTERN = Pattern.compile("true|false");
     private static final Pattern NULL_PATTERN = Pattern.compile("null");
@@ -52,7 +53,7 @@ public class JsonParser {
      * @return a new {@link JsonObject}
      * @throws JsonParseException if an object member is malformed
      */
-    private static JsonElement parseObject(String json) throws JsonParseException {
+    private static  JsonElement parseObject(String json) throws JsonParseException {
         JsonObject obj = new JsonObject();
         index++;
         index = skipWhitespace(json, index);
@@ -60,6 +61,8 @@ public class JsonParser {
         while (index < json.length() && json.charAt(index) != '}') {
             index = skipWhitespace(json, index);
             Matcher keyMatcher = STRING_PATTERN.matcher(json.substring(index));
+
+
             if (!keyMatcher.lookingAt()) {
                 throw new JsonParseException("Expected string key at position " + index, index);
             }
@@ -98,7 +101,7 @@ public class JsonParser {
      * @return a new {@link JsonArray}
      * @throws JsonParseException if the array structure is invalid
      */
-    private static JsonElement parseArray(String json) throws JsonParseException {
+    private  static  JsonElement parseArray(String json) throws JsonParseException {
         JsonArray array = new JsonArray();
         index++;
         index = skipWhitespace(json, index);
@@ -130,7 +133,7 @@ public class JsonParser {
      * @return a parsed {@link JsonElement}
      * @throws JsonParseException if the value is ill‑formed or unsupported
      */
-    private static JsonElement parseValue(String json) throws JsonParseException {
+    private static   JsonElement parseValue(String json) throws JsonParseException {
         index = skipWhitespace(json, index);
         if (index >= json.length()) {
             throw new JsonParseException("Unexpected end of JSON", index);
@@ -172,7 +175,7 @@ public class JsonParser {
      * @return a {@link JsonString} instance
      * @throws JsonParseException if the string is not properly delimited
      */
-    private static JsonElement parseString(String json) throws JsonParseException {
+    private static   JsonElement parseString(String json) throws JsonParseException {
         Matcher matcher = STRING_PATTERN.matcher(json.substring(index));
         if (!matcher.lookingAt()) {
             throw new JsonParseException("Invalid string at position " + index, index);
@@ -188,7 +191,7 @@ public class JsonParser {
      * @param json the input to verify
      * @return a successful {@link JsonParseResult} if balanced, otherwise an error
      */
-    private static JsonParseResult checkBraces(String json) {
+    private static    JsonParseResult checkBraces(String json) {
         Stack<Character> braces = new Stack<>();
         int lastBraceIndex = 0;
 
@@ -232,7 +235,7 @@ public class JsonParser {
      * @param i    starting position
      * @return first index that is not whitespace
      */
-    private static int skipWhitespace(String json, int i) {
+    private static  int skipWhitespace(String json, int i) {
         while (i < json.length() && Character.isWhitespace(json.charAt(i))) {
             i++;
         }

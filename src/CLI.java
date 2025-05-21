@@ -37,6 +37,7 @@ public class CLI {
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
 
+
             if (c == '"') {
                 inQuotes = !inQuotes;
             } else if (Character.isWhitespace(c)) {
@@ -53,12 +54,15 @@ public class CLI {
             }
         }
 
+
+
+
         if (inQuotes) {
             throw new IllegalArgumentException("Invalid input: Unterminated quoted string.");
         }
 
         if (current.length() > 0) {
-            args.add(current.toString());
+            args.add(current.toString().replace('\'','\"'));
         }
 
         return args.toArray(new String[0]);
