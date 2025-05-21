@@ -7,9 +7,28 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * A minimal interactive command‑line interface.
+ * <p>
+ * The {@code CLI} continuously reads lines from {@code System.in}, tokenizes them with
+ * shell‑like rules (quoted segments become single tokens), delegates execution to a
+ * {@link CommandHandler}, and prints the handler's response.
+ * Typing {@code exit} (case‑insensitive) terminates the loop.
+ */
 public class CLI {
+    /**
+     * Handles execution of parsed commands.
+     */
     private CommandHandler commandHandler;
 
+    /**
+     * Tokenizes a raw command line using simple shell‑style semantics.
+     * Whitespace separates tokens unless the whitespace appears inside double quotes.
+     *
+     * @param input raw user input
+     * @return array where element&nbsp;0 is the command and the rest are its arguments
+     * @throws IllegalArgumentException if a quoted string is not properly closed
+     */
     private String[] parseCommand(String input) throws IllegalArgumentException {
         List<String> args = new ArrayList<>();
         StringBuilder current = new StringBuilder();
@@ -45,6 +64,12 @@ public class CLI {
         return args.toArray(new String[0]);
     }
 
+    /**
+     * Launches the read–eval–print loop.
+     * Prompts the user with {@code "> "}, parses each line, and invokes
+     * {@link CommandHandler#handleCommand(String, String[])} with the extracted
+     * command and arguments. The loop exits when the user types {@code exit}.
+     */
     public void run()
     {
         commandHandler = new CommandHandler();

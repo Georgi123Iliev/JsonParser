@@ -6,14 +6,24 @@ import src.json.types.*;
 import java.util.*;
 import java.util.regex.*;
 
+/**
+ * Recursive‑descent parser for a limited JSON grammar.
+ */
 public class JsonParser {
+    /** Current read position in the input. */
     private static int index;
+
     private static final Pattern STRING_PATTERN = Pattern.compile("\"(\\\\.|[^\"])*\"");
     private static final Pattern NUMBER_PATTERN = Pattern.compile("-?\\d+(\\.\\d+)?([eE][+-]?\\d+)?");
     private static final Pattern BOOLEAN_PATTERN = Pattern.compile("true|false");
     private static final Pattern NULL_PATTERN = Pattern.compile("null");
 
-
+    /**
+     * Parses a JSON document.
+     *
+     * @param json the raw JSON text
+     * @return {@link JsonParseResult} containing a parse tree or error information
+     */
     public static JsonParseResult parseJson(String json) {
         index = 0;
         json = json.trim();
@@ -21,14 +31,12 @@ public class JsonParser {
         if (!braceCheckResult.isSuccess())
             return braceCheckResult;
 
-
         JsonElement result;
         try {
             result = parseValue(json);
             index = skipWhitespace(json, index);
-        }catch (JsonParseException ex)
-        {
-            return new JsonParseResult(ex.getMessage(),ex.getPosition());
+        } catch (JsonParseException ex) {
+            return new JsonParseResult(ex.getMessage(), ex.getPosition());
         }
 
         if (index != json.length()) {
@@ -37,6 +45,13 @@ public class JsonParser {
         return new JsonParseResult(result);
     }
 
+    /**
+     * Parses an object starting at the current {@code index}.
+     *
+     * @param json the whole JSON string being parsed
+     * @return a new {@link JsonObject}
+     * @throws JsonParseException if an object member is malformed
+     */
     private static JsonElement parseObject(String json) throws JsonParseException {
         JsonObject obj = new JsonObject();
         index++;
@@ -76,7 +91,14 @@ public class JsonParser {
         return obj;
     }
 
-    private static JsonElement parseArray(String json) throws JsonParseException{
+    /**
+     * Parses an array starting at the current {@code index}.
+     *
+     * @param json the whole JSON string being parsed
+     * @return a new {@link JsonArray}
+     * @throws JsonParseException if the array structure is invalid
+     */
+    private static JsonElement parseArray(String json) throws JsonParseException {
         JsonArray array = new JsonArray();
         index++;
         index = skipWhitespace(json, index);
@@ -101,6 +123,13 @@ public class JsonParser {
         return array;
     }
 
+    /**
+     * Dispatches to the appropriate value parser based on the next character.
+     *
+     * @param json the whole JSON string being parsed
+     * @return a parsed {@link JsonElement}
+     * @throws JsonParseException if the value is ill‑formed or unsupported
+     */
     private static JsonElement parseValue(String json) throws JsonParseException {
         index = skipWhitespace(json, index);
         if (index >= json.length()) {
@@ -136,6 +165,13 @@ public class JsonParser {
         throw new JsonParseException("Invalid value at position " + index, index);
     }
 
+    /**
+     * Parses a JSON string literal.
+     *
+     * @param json the whole JSON string being parsed
+     * @return a {@link JsonString} instance
+     * @throws JsonParseException if the string is not properly delimited
+     */
     private static JsonElement parseString(String json) throws JsonParseException {
         Matcher matcher = STRING_PATTERN.matcher(json.substring(index));
         if (!matcher.lookingAt()) {
@@ -146,6 +182,12 @@ public class JsonParser {
         return new JsonString(result.replace("\\\"", "\"").replace("\\\\", "\\"));
     }
 
+    /**
+     * Checks that all brackets and braces are balanced.
+     *
+     * @param json the input to verify
+     * @return a successful {@link JsonParseResult} if balanced, otherwise an error
+     */
     private static JsonParseResult checkBraces(String json) {
         Stack<Character> braces = new Stack<>();
         int lastBraceIndex = 0;
@@ -183,6 +225,13 @@ public class JsonParser {
         }
     }
 
+    /**
+     * Moves the cursor past consecutive whitespace.
+     *
+     * @param json the input string
+     * @param i    starting position
+     * @return first index that is not whitespace
+     */
     private static int skipWhitespace(String json, int i) {
         while (i < json.length() && Character.isWhitespace(json.charAt(i))) {
             i++;

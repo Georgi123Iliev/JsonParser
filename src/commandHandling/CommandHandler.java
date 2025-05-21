@@ -6,10 +6,26 @@ import src.json.JsonFileHandler;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Central dispatcher that converts a textual command into a concrete {@link Command} implementation
+ * and executes it.
+ * <p>
+ * A single {@link JsonFileHandler} instance is shared between commands that require
+ * file access. The mapping between {@link CommandIdentifier identifiers} and command objects
+ * is populated once in the constructor and remains immutable afterwards.
+ */
 public class CommandHandler {
 
-    private final Map<CommandIdentifier, Command> commandHandling = new HashMap<CommandIdentifier, Command>();
+    /** Lazily‑constructed registry of commands keyed by their identifier. */
+    private final Map<CommandIdentifier, Command> commandHandling = new HashMap<>();
+
     private JsonFileHandler jsonFileHandler;
+
+    /**
+     * Creates all command objects and registers them in the internal map.
+     * Each command that manipulates JSON receives the same {@link JsonFileHandler}
+     * so they operate on shared state.
+     */
     public CommandHandler()
     {
         jsonFileHandler = new JsonFileHandler();
@@ -25,16 +41,24 @@ public class CommandHandler {
         commandHandling.put(CommandIdentifier.REMOVE, new Remove(jsonFileHandler));
         commandHandling.put(CommandIdentifier.MOVE, new Move(jsonFileHandler));
         commandHandling.put(CommandIdentifier.CREATE, new Create(jsonFileHandler));
+        commandHandling.put(CommandIdentifier.CLOSE, new Close(jsonFileHandler));
 
     }
 
+    /**
+     * Executes a command given its textual name and argument list.
+     *
+     * @param command raw command as typed by the user (e.g. {@code "open"})
+     * @param args    arguments forwarded to the command's {@code execute} method
+     * @return the command's output or an explanatory message if the command is unknown
+     */
     public String handleCommand(String command, String[] args)
     {
 
         String commandResult;
         CommandIdentifier identifier;
         try {
-           identifier = CommandIdentifier.fromString(command);
+            identifier = CommandIdentifier.fromString(command);
         }catch (IllegalArgumentException ex)
         {
             return ex.getMessage();
@@ -42,7 +66,7 @@ public class CommandHandler {
 
         Command executableCommand = commandHandling.get(identifier);
         if(executableCommand != null)
-          commandResult = executableCommand.execute(args);
+            commandResult = executableCommand.execute(args);
         else
             commandResult = "No such command!";
 

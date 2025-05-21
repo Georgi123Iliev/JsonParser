@@ -1,5 +1,10 @@
 package src.json.commands;
 
+/**
+ * Enumeration of all supported command keywords accepted by the CLI.
+ * Each constant stores its lowercase textual representation so the user is
+ * free to type commands in any mix of cases.
+ */
 public enum CommandIdentifier {
     OPEN("open"),
     VALIDATE("validate"),
@@ -11,11 +16,19 @@ public enum CommandIdentifier {
     SAVEAS("saveas"),
     REMOVE("remove"),
     MOVE("move"),
-    CREATE("create");
-
+    CREATE("create"),
+    CLOSE("close");
+    /** Literal keyword entered by the user (always lowercase). */
     private final String value;
 
-    // Method to get enum from string
+    /**
+     * Converts a raw command string to its corresponding identifier.
+     * The comparison is case‑insensitive.
+     *
+     * @param input user‑supplied command token
+     * @return matching {@link CommandIdentifier}
+     * @throws IllegalArgumentException if {@code input} does not match any command
+     */
     public static CommandIdentifier fromString(String input) {
         for (CommandIdentifier command : CommandIdentifier.values()) {
             if (command.getValue().equalsIgnoreCase(input)) {
@@ -29,6 +42,9 @@ public enum CommandIdentifier {
         this.value = value;
     }
 
+    /**
+     * @return the lowercase keyword for this command
+     */
     public String getValue() {
         return value;
     }
