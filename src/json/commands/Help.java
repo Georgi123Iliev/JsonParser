@@ -1,4 +1,9 @@
 package src.json.commands;
+/**
+ * Displays help information about all available commands.
+ */
+
+
 
 public class Help implements Command {
 
@@ -14,7 +19,12 @@ public class Help implements Command {
             + "saveas <file> [<path>]: Saves the object to a new file. If a path is provided, saves that part of the object.\n";
 
 
-
+    /**
+     * Returns the formatted help text.
+     *
+     * @param args argument list is ignored
+     * @return help text for the CLI
+     */
     @Override
     public String execute(String[] args) {
         return helpMessage;

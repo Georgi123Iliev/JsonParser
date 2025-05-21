@@ -1,6 +1,12 @@
 package src.json.commands;
 
 import src.json.JsonFileHandler;
+/**
+ * Closes the currently-opened JSON file, discarding unsaved
+ * changes if they have already been saved.
+ */
+
+
 
 public class Close implements Command {
 
@@ -10,6 +16,12 @@ public class Close implements Command {
         this.jsonFileHandler = jsonFileHandler;
     }
 
+    /**
+     * Closes the current file.
+     *
+     * @param args expects no arguments
+     * @return confirmation or error message
+     */
     @Override
     public String execute(String[] args) {
         if(args.length != 0)

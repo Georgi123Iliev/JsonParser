@@ -62,7 +62,7 @@ public class JsonFileHandler {
             return "Error reading file: " + e.getMessage();
         }
 
-        return "";
+        return "File opened";
     }
 
     /**
@@ -72,6 +72,9 @@ public class JsonFileHandler {
      * @return result message
      */
     public String remove(String jsonPath) {
+        if(jsonObject == null)
+            return "No file opened";
+
         Queue<String> pathQueue = parseJsonPath(jsonPath);
         try {
             return assign(pathQueue, jsonObject, null, Nothing.INSTANCE);
@@ -94,6 +97,9 @@ public class JsonFileHandler {
                           JsonElement currentData,
                           String previousKey,
                           JsonElement valueToAdd) throws NotFoundException {
+        if(jsonObject == null)
+            return "No file opened";
+
         if (jsonPath.isEmpty()) {
             return "Empty JSON path";
         }
@@ -152,6 +158,8 @@ public class JsonFileHandler {
      * @return result message
      */
     public String move(String from, String to) {
+        if(jsonObject == null)
+            return "No file opened";
         var validationResult = JsonPathIntersectionValidator.validate(from, to);
         if (!validationResult.isSuccess()) {
             return validationResult.getReasonForFailure();
@@ -160,9 +168,9 @@ public class JsonFileHandler {
         Queue<String> fromQueue = parseJsonPath(from);
         JsonElement value;
         try {
-            value = getValueAt(fromQueue, jsonObject, "");
+            value = getValueAt(fromQueue, jsonObject, "Main object");
             remove(from);
-            return assign(parseJsonPath(to), jsonObject, "", value);
+            return assign(parseJsonPath(to), jsonObject, "Main object", value);
         } catch (NotFoundException ex) {
             return ex.getMessage();
         }
@@ -178,6 +186,8 @@ public class JsonFileHandler {
      * @throws NotFoundException if the path is invalid
      */
     private JsonElement getValueAt(Queue<String> jsonPath, JsonElement currentData, String previousKey) throws NotFoundException {
+
+
         if (jsonPath.isEmpty()) {
             throw new NotFoundException("Empty JSON path");
         }
@@ -265,19 +275,27 @@ public class JsonFileHandler {
      * @return result message
      */
     public String set(String jsonPath, String jsonValue) {
+
+        if(jsonObject == null)
+            return "No file opened";
+
         ValueParseResult valueParseResult = ValueParser.parseValue(jsonValue);
         JsonParseResult parseResult = JsonParser.parseJson(jsonValue);
-
-        if (!valueParseResult.isSuccess) {
-            return parseResult.isSuccess() ? parseResult.errorMessage : "Bad json string";
+        JsonElement toAssign;
+        if (!valueParseResult.isSuccess&&!parseResult.isSuccess()) {
+            return "Bad json string";
         }
+        else if(valueParseResult.isSuccess)
+        {
+            toAssign = valueParseResult.parsedValue;
+        }
+        else{
 
-        if (!parseResult.isSuccess()) {
-            return parseResult.errorMessage;
+            toAssign = parseResult.parsedData;;
         }
 
         try {
-            return assign(parseJsonPath(jsonPath), jsonObject, null, parseResult.parsedData);
+            return assign(parseJsonPath(jsonPath), jsonObject, "Main object", toAssign);
         } catch (NotFoundException ex) {
             return ex.getMessage();
         }
@@ -289,6 +307,7 @@ public class JsonFileHandler {
      * @return "Json is valid" if no parse errors were found or the stored error message otherwise
      */
     public String validate() {
+
         if (jsonParseResult == null) {
             return "You must first open a file before validating";
         }
@@ -302,6 +321,10 @@ public class JsonFileHandler {
      * @return formatted list or not-found message
      */
     public String search(String key) {
+
+        if(jsonObject == null)
+            return "No file opened";
+
         JsonArray valuesFound = searchKey(key, jsonObject);
         return valuesFound.isEmpty() ? "No values with the key \"" + key + "\"" : formatStructuredJson(valuesFound, 1);
     }
@@ -337,6 +360,8 @@ public class JsonFileHandler {
      * @return pretty-printed version of the current JSON
      */
     public String getStructuredJson() {
+        if(jsonObject == null)
+            return "No file opened";
         return formatStructuredJson(jsonObject, 1);
     }
 
@@ -394,6 +419,8 @@ public class JsonFileHandler {
      * @return empty string on success or error message
      */
     public String saveAs(String fileName) {
+        if(jsonObject == null)
+            return "No file opened";
         return saveAs(fileName, jsonObject);
     }
 
@@ -416,7 +443,7 @@ public class JsonFileHandler {
             return "Error reading file: " + e.getMessage();
         }
         isSaved = true;
-        return "";
+        return "File saved";
     }
 
     /**
@@ -427,6 +454,8 @@ public class JsonFileHandler {
      * @return result message
      */
     public String saveAs(String fileName, String path) {
+        if(jsonObject == null)
+            return "No file opened";
         JsonElement jsonElement;
         try {
             jsonElement = getValueAt(parseJsonPath(path), jsonObject, null);
@@ -491,6 +520,8 @@ public class JsonFileHandler {
      * @return confirmation message
      */
     public String close() {
+        if(jsonObject == null)
+            return "No file opened";
         jsonObject = null;
         isSaved = false;
         filePath = null;
@@ -506,6 +537,8 @@ public class JsonFileHandler {
      * @return result message
      */
     public String create(String path, String jsonValue) {
+        if(jsonObject == null)
+            return "No file opened";
         JsonParseResult parseResult = JsonParser.parseJson(jsonValue);
         if (!parseResult.isSuccess()) {
             return "Error in parsing <to> parameter: " + parseResult.errorMessage;
@@ -528,7 +561,7 @@ public class JsonFileHandler {
             return ex.getMessage();
         }
 
-        return "";
+        return "Element created";
     }
 
     /**

@@ -10,6 +10,17 @@ public class Move implements Command {
         this.jsonFileHandler = jsonFileHandler;
     }
 
+    /**
+     * Moves a JSON element from one path to another within
+     * the document.
+     */
+
+    /**
+     * Moves an element from the first path to the second.
+     *
+     * @param args source and destination path arguments
+     * @return result message from the operation
+     */
     @Override
     public String execute(String[] args) {
         if(args.length != 2)
