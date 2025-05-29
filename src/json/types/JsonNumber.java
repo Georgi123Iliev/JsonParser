@@ -3,7 +3,7 @@ package src.json.types;
 /**
  * Represents a JSON number, backed by a {@link Number}.
  */
-public class JsonNumber implements JsonElement {
+public class JsonNumber extends JsonPrimitive {
     private final Number value;
 
     /**
@@ -28,6 +28,11 @@ public class JsonNumber implements JsonElement {
     @Override
     public JsonElement deepCopy() {
         return new JsonNumber(value);
+    }
+
+    @Override
+    public String toJson(int padding) {
+        return toString();
     }
 
     /**

@@ -3,7 +3,7 @@ package src.json.types;
 /**
  * Represents a JSON string value.
  */
-public class JsonString implements JsonElement {
+public class JsonString extends JsonPrimitive {
     private final String value;
 
     /**
@@ -28,6 +28,14 @@ public class JsonString implements JsonElement {
     @Override
     public JsonElement deepCopy() {
         return new JsonString(value);
+    }
+
+    @Override
+    public String toJson(int padding) {
+
+        // За примитиви няма значение indent-а
+        // Той е нужен само за по-сложните типове
+        return toString();
     }
 
     /**

@@ -98,8 +98,6 @@ public class CLI {
                 continue;
             }
 
-
-
             if(items.length == 0) continue;
 
             String command = items[0];

@@ -3,7 +3,7 @@ package src.json.types;
 /**
  * Special placeholder used to signal absence of a value.
  */
-public class Nothing implements JsonElement {
+public class Nothing extends JsonPrimitive {
 
     /** Shared singleton instance. */
     public static final Nothing INSTANCE = new Nothing();
@@ -19,6 +19,11 @@ public class Nothing implements JsonElement {
         return this;
     }
 
+    @Override
+    public String toJson(int padding) {
+        return "";
+    }
+
     /**
      * @return fixed string {@code "<nothing>"}
      */
@@ -26,4 +31,6 @@ public class Nothing implements JsonElement {
     public String toString() {
         return "<nothing>";
     }
+
+
 }

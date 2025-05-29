@@ -3,7 +3,7 @@ package src.json.types;
 /**
  * Represents a JSON boolean value.
  */
-public class JsonBoolean implements JsonElement {
+public class JsonBoolean extends JsonPrimitive {
     private final Boolean value;
 
     /**
@@ -28,6 +28,11 @@ public class JsonBoolean implements JsonElement {
     @Override
     public JsonElement deepCopy() {
         return new JsonBoolean(value);
+    }
+
+    @Override
+    public String toJson(int padding) {
+        return toString();
     }
 
     /**

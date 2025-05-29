@@ -1,11 +1,14 @@
 package src.json.types;
 
+import src.exception.InvalidJsonPathException;
+import src.exception.NotFoundException;
+
 import java.util.*;
 
 /**
  * Represents a JSON array, holding an ordered list of {@code JsonElement}s.
  */
-public class JsonArray implements JsonElement {
+public class JsonArray extends JsonComposite {
     private final List<JsonElement> elements;
 
     /**
@@ -105,5 +108,121 @@ public class JsonArray implements JsonElement {
     @Override
     public String toString() {
         return elements.toString();
+    }
+
+    public String toJson(int indent) {
+        StringBuilder sb = new StringBuilder();
+        String padding = "\t".repeat(Math.max(0, indent));
+        String biggerPadding =  "\t".repeat(indent+1);
+
+        sb.append("\n").append(padding).append("[");
+
+        int i=0;
+        for (JsonElement el : elements) {
+
+
+            sb.append(el.extraNewline());
+            sb.append(biggerPadding);
+            sb.append(el.toJson(indent+1));
+            if(i != elements.size()-1) sb.append(",");
+
+
+            i++;
+        }
+        sb.append("\n").append(padding).append("]");
+
+        return sb.toString();
+
+    }
+
+    @Override
+    public JsonArray search(String key) {
+
+        JsonArray result = new JsonArray();
+
+        for (JsonElement el : elements) {
+            result.addAll(el.search(key));
+        }
+
+        return result;
+    }
+
+    @Override
+    public void completePath(Queue<String> jsonPath) throws InvalidJsonPathException {
+        String head = jsonPath.poll();
+        String next = jsonPath.peek();
+
+        if (head == null) {
+            return;
+        }
+
+        JsonElement nextElement = (next == null) ? JsonNull.INSTANCE : (next.matches("\\[\\d+\\]") ? new JsonArray() : new JsonObject());
+
+        if (!head.matches("\\[\\d+\\]")) {
+            throw new InvalidJsonPathException("Expected array index but got object key '" + head + "'");
+        }
+
+        int index = Integer.parseInt(head.substring(1, head.length() - 1));
+        if (index == size()) {
+            add(nextElement);
+        } else if (index > size()) {
+            throw new InvalidJsonPathException("Cannot complete path: trying to add index " + index + " before completing previous indices.");
+        }
+
+
+        get(index).completePath(jsonPath);
+    }
+
+    @Override
+    public JsonElement getValueAt(Queue<String> jsonPath, String previousKey) throws NotFoundException {
+        String head = jsonPath.poll();
+
+        if(head == null)
+            return this;
+
+        if (!head.matches("\\[\\d+\\]")) {
+            throw new NotFoundException("In array " + previousKey + ", '" + head + "' is not a valid index");
+        }
+
+        int index = Integer.parseInt(head.substring(1, head.length() - 1));
+        if (index >= size()) {
+            throw new NotFoundException(head + " is greater than the number of items in array " + previousKey);
+        }
+
+        JsonElement element = get(index);
+        return element.getValueAt(jsonPath, head);
+
+        }
+
+    @Override
+    public String assign(Queue<String> jsonPath, String previousKey, JsonElement valueToAdd) throws NotFoundException {
+
+
+        if (jsonPath.isEmpty()) {
+            return "Empty JSON path";
+        }
+
+        String head = jsonPath.poll();
+
+        if (!head.matches("\\[\\d+\\]")) {
+            return "In array " + previousKey + ", '" + head + "' is not a valid index format";
+        }
+
+        int index = Integer.parseInt(head.substring(1, head.length() - 1));
+        if (index >= size()) {
+            return head + " is greater than the number of items in the array " + previousKey;
+        }
+
+        if (jsonPath.isEmpty()) {
+            if (valueToAdd instanceof Nothing) {
+                remove(index);
+                return "Element removed";
+            } else {
+                set(index, valueToAdd);
+                return "Element set";
+            }
+        }
+
+        return get(index).assign(jsonPath, head, valueToAdd);
     }
 }

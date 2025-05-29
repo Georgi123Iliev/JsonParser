@@ -25,8 +25,8 @@ public class JsonFileHandler {
 
     private Path filePath;
     private JsonElement jsonObject;
-    private JsonParseResult jsonParseResult;
-    private boolean isSaved;
+    private String rawText;
+
 
     /** Creates an empty handler with no file loaded. */
     public JsonFileHandler() {}
@@ -38,12 +38,9 @@ public class JsonFileHandler {
      * @return empty string on success, otherwise an explanatory message
      */
     public String openFile(String fileName) {
-        if (jsonObject != null && !isSaved) {
-            return "A file is currently opened and not been saved.";
-        }
+
 
         jsonObject = null;
-        isSaved = false;
         Path path = Path.of(fileName);
 
         if (!Files.exists(path)) {
@@ -51,13 +48,9 @@ public class JsonFileHandler {
         }
 
         try {
-            String rawText = Files.readString(path);
+            rawText = Files.readString(path);
             filePath = path;
-            jsonParseResult = JsonParser.parseJson(rawText);
-            if (jsonParseResult.isSuccess()) {
-                jsonObject = jsonParseResult.parsedData;
-            }
-            isSaved = true;
+
         } catch (IOException e) {
             return "Error reading file: " + e.getMessage();
         }
@@ -77,7 +70,7 @@ public class JsonFileHandler {
 
         Queue<String> pathQueue = parseJsonPath(jsonPath);
         try {
-            return assign(pathQueue, jsonObject, null, Nothing.INSTANCE);
+            return assign(pathQueue, jsonObject, "Main object", Nothing.INSTANCE);
         } catch (NotFoundException ex) {
             return ex.getMessage();
         }
@@ -97,57 +90,11 @@ public class JsonFileHandler {
                           JsonElement currentData,
                           String previousKey,
                           JsonElement valueToAdd) throws NotFoundException {
-        if(jsonObject == null)
+        if(currentData == null)
             return "No file opened";
 
-        if (jsonPath.isEmpty()) {
-            return "Empty JSON path";
-        }
+        return currentData.assign(jsonPath, previousKey, valueToAdd);
 
-        String head = jsonPath.poll();
-
-        if (currentData instanceof JsonArray jsonArray) {
-            if (!head.matches("\\[\\d+\\]")) {
-                return "In array " + previousKey + ", '" + head + "' is not a valid index format";
-            }
-
-            int index = Integer.parseInt(head.substring(1, head.length() - 1));
-            if (index >= jsonArray.size()) {
-                return head + " is greater than the number of items in the array " + previousKey;
-            }
-
-            if (jsonPath.isEmpty()) {
-                if (valueToAdd instanceof Nothing) {
-                    jsonArray.remove(index);
-                    return "Element removed";
-                } else {
-                    jsonArray.set(index, valueToAdd);
-                    return "Element set";
-                }
-            }
-
-            return assign(jsonPath, jsonArray.get(index), head, valueToAdd);
-
-        } else if (currentData instanceof JsonObject jsonObject) {
-            if (!jsonObject.containsKey(head)) {
-                return "Json path error: '" + previousKey + "' has no key '" + head + "'";
-            }
-
-            if (jsonPath.isEmpty()) {
-                if (valueToAdd instanceof Nothing) {
-                    jsonObject.remove(head);
-                    return "Element removed";
-                } else {
-                    jsonObject.add(head, valueToAdd);
-                    return "Element set";
-                }
-            }
-
-            return assign(jsonPath, jsonObject.get(head), head, valueToAdd);
-
-        } else {
-            return "Invalid JSON structure: Cannot descend into primitive at " + previousKey;
-        }
     }
 
     /**
@@ -167,71 +114,20 @@ public class JsonFileHandler {
 
         Queue<String> fromQueue = parseJsonPath(from);
         JsonElement value;
+        var copiedObj = jsonObject.deepCopy();
         try {
-            value = getValueAt(fromQueue, jsonObject, "Main object");
-            remove(from);
-            return assign(parseJsonPath(to), jsonObject, "Main object", value);
+
+            value = copiedObj.getValueAt(fromQueue, "Main object");
+            assign(fromQueue, copiedObj, "Main object", Nothing.INSTANCE);
+
+            String result = assign(parseJsonPath(to), copiedObj, "Main object", value);
+
+            jsonObject = copiedObj;
+            return result;
         } catch (NotFoundException ex) {
+
             return ex.getMessage();
         }
-    }
-
-    /**
-     * Returns the element referenced by {@code jsonPath}.
-     *
-     * @param jsonPath    queue of path tokens (consumed)
-     * @param currentData traversal cursor
-     * @param previousKey last key/index for error context
-     * @return the element found
-     * @throws NotFoundException if the path is invalid
-     */
-    private JsonElement getValueAt(Queue<String> jsonPath, JsonElement currentData, String previousKey) throws NotFoundException {
-
-
-        if (jsonPath.isEmpty()) {
-            throw new NotFoundException("Empty JSON path");
-        }
-
-        String head = jsonPath.poll();
-
-        if (currentData instanceof JsonArray jsonArray) {
-            if (!head.matches("\\[\\d+\\]")) {
-                throw new NotFoundException("In array " + previousKey + ", '" + head + "' is not a valid index");
-            }
-
-            int index = Integer.parseInt(head.substring(1, head.length() - 1));
-            if (index >= jsonArray.size()) {
-                throw new NotFoundException(head + " is greater than the number of items in array " + previousKey);
-            }
-
-            JsonElement element = jsonArray.get(index);
-            return jsonPath.isEmpty() ? element : getValueAt(jsonPath, element, head);
-
-        } else if (currentData instanceof JsonObject jsonObject) {
-            if (!jsonObject.containsKey(head)) {
-                throw new NotFoundException("JSON object '" + previousKey + "' has no key '" + head + "'");
-            }
-
-            JsonElement element = jsonObject.get(head);
-            return jsonPath.isEmpty() ? element : getValueAt(jsonPath, element, head);
-
-        } else {
-            throw new NotFoundException("Invalid JSON structure at '" + previousKey + "', cannot descend into primitive");
-        }
-    }
-
-    /**
-     * Converts the remaining queue back into a human-readable path (used for error messages).
-     *
-     * @param path queue of tokens
-     * @return concatenated path string
-     */
-    private String jsonPathToString(Queue<String> path) {
-        StringBuilder sb = new StringBuilder();
-        for (String segment : path) {
-            sb.append(segment);
-        }
-        return sb.toString();
     }
 
     /**
@@ -308,10 +204,22 @@ public class JsonFileHandler {
      */
     public String validate() {
 
-        if (jsonParseResult == null) {
+
+        JsonParseResult jsonParseResult = JsonParser.parseJson(rawText);
+
+        if (rawText == null) {
             return "You must first open a file before validating";
         }
-        return jsonParseResult.isSuccess() ? "Json is valid" : jsonParseResult.errorMessage;
+        if(jsonParseResult.isSuccess())
+        {
+            jsonObject = jsonParseResult.parsedData;
+            return "Json is valid";
+        }
+        else
+        {
+            return jsonParseResult.errorMessage;
+        }
+
     }
 
     /**
@@ -325,36 +233,10 @@ public class JsonFileHandler {
         if(jsonObject == null)
             return "No file opened";
 
-        JsonArray valuesFound = searchKey(key, jsonObject);
+        JsonArray valuesFound = jsonObject.search(key);
         return valuesFound.isEmpty() ? "No values with the key \"" + key + "\"" : formatStructuredJson(valuesFound, 1);
     }
 
-    /**
-     * Recursive helper for {@link #search(String)}.
-     *
-     * @param key  property name to look for
-     * @param data current subtree
-     * @return array of found values (may be empty)
-     */
-    private JsonArray searchKey(String key, JsonElement data) {
-        JsonArray values = new JsonArray();
-
-        if (data instanceof JsonObject jsonObject) {
-            for (String k : jsonObject.keySet()) {
-                JsonElement value = jsonObject.get(k);
-                if (k.equals(key)) {
-                    values.add(value);
-                }
-                values.addAll((JsonArray) searchKey(key, value));
-            }
-        } else if (data instanceof JsonArray jsonArray) {
-            for (int i = 0; i < jsonArray.size(); i++) {
-                values.addAll((JsonArray) searchKey(key, jsonArray.get(i)));
-            }
-        }
-
-        return values;
-    }
 
     /**
      * @return pretty-printed version of the current JSON
@@ -362,7 +244,7 @@ public class JsonFileHandler {
     public String getStructuredJson() {
         if(jsonObject == null)
             return "No file opened";
-        return formatStructuredJson(jsonObject, 1);
+        return formatStructuredJson(jsonObject, 0);
     }
 
     /**
@@ -373,43 +255,7 @@ public class JsonFileHandler {
      * @return string representation with line breaks and tabs
      */
     private static String formatStructuredJson(JsonElement json, int depth) {
-        StringBuilder sb = new StringBuilder();
-        String padding = "\t".repeat(Math.max(0, depth - 1));
-        String innerPadding = "\t".repeat(depth);
-
-        if (json instanceof JsonObject obj) {
-            sb.append(padding).append("{\n");
-            int count = 0;
-            int total = obj.keySet().size();
-            for (String key : obj.keySet()) {
-                JsonElement value = obj.get(key);
-                sb.append(innerPadding).append("\"").append(key).append("\" : ");
-                if (value instanceof JsonObject || value instanceof JsonArray) {
-                    sb.append("\n");
-                }
-                sb.append(formatStructuredJson(value, depth + 1));
-                sb.append(++count != total ? ",\n" : "\n");
-            }
-            sb.append(padding).append("}");
-        } else if (json instanceof JsonArray arr) {
-            sb.append(padding).append("[");
-            if (arr.size() > 0) {
-                sb.append("\n");
-            }
-            for (int i = 0; i < arr.size(); i++) {
-                JsonElement value = arr.get(i);
-                if (!(value instanceof JsonObject || value instanceof JsonArray)) {
-                    sb.append(innerPadding);
-                }
-                sb.append(formatStructuredJson(value, depth + 1));
-                sb.append(i != arr.size() - 1 ? ",\n" : "\n");
-            }
-            sb.append(padding).append("]");
-        } else {
-            sb.append(json);
-        }
-
-        return sb.toString();
+       return json.toJson(depth);
     }
 
     /**
@@ -438,11 +284,11 @@ public class JsonFileHandler {
                 Files.createFile(path);
             } catch (FileAlreadyExistsException ignored) {
             }
-            Files.writeString(path, formatStructuredJson(jsonObject, 1));
+            Files.writeString(path, formatStructuredJson(jsonObject, 0));
         } catch (IOException e) {
             return "Error reading file: " + e.getMessage();
         }
-        isSaved = true;
+
         return "File saved";
     }
 
@@ -454,65 +300,22 @@ public class JsonFileHandler {
      * @return result message
      */
     public String saveAs(String fileName, String path) {
+       if(rawText == null)
+           return "No file opened";
+
         if(jsonObject == null)
-            return "No file opened";
+            return "Json not validated";
+        
         JsonElement jsonElement;
         try {
-            jsonElement = getValueAt(parseJsonPath(path), jsonObject, null);
+            jsonElement = jsonObject.getValueAt(parseJsonPath(path), "Main object");
         } catch (NotFoundException ex) {
             return ex.getMessage();
         }
         return saveAs(fileName, jsonElement);
     }
 
-    /**
-     * Ensures all intermediate objects/arrays along {@code jsonPath} exist, creating them as needed.
-     *
-     * @param jsonPath    queue of tokens
-     * @param currentData traversal cursor
-     * @throws InvalidJsonPathException if the path is internally inconsistent
-     */
-    private void completePath(Queue<String> jsonPath, JsonElement currentData) throws InvalidJsonPathException {
-        String head = jsonPath.poll();
-        String next = jsonPath.peek();
 
-        if (head == null) {
-            return;
-        }
-
-        JsonElement nextElement = (next == null) ? null : (next.matches("\\[\\d+\\]") ? new JsonArray() : new JsonObject());
-
-        if (currentData instanceof JsonArray jsonArray) {
-            if (!head.matches("\\[\\d+\\]")) {
-                throw new InvalidJsonPathException("Expected array index but got object key '" + head + "'");
-            }
-
-            int index = Integer.parseInt(head.substring(1, head.length() - 1));
-            if (index == jsonArray.size()) {
-                jsonArray.add(nextElement);
-            } else if (index > jsonArray.size()) {
-                throw new InvalidJsonPathException("Cannot complete path: trying to add index " + index + " before completing previous indices.");
-            }
-
-            completePath(jsonPath, jsonArray.get(index));
-
-        } else if (currentData instanceof JsonObject jsonObject) {
-            if (head.matches("\\[\\d+\\]")) {
-                throw new InvalidJsonPathException("Unexpected array index '" + head + "' in object path");
-            }
-
-            if (!jsonObject.containsKey(head)) {
-                jsonObject.add(head, nextElement);
-            }
-
-            if (!jsonPath.isEmpty()) {
-                completePath(jsonPath, jsonObject.get(head));
-            }
-
-        } else {
-            throw new InvalidJsonPathException("Invalid element encountered during path completion.");
-        }
-    }
 
     /**
      * Closes the file and clears the in-memory state.
@@ -520,12 +323,11 @@ public class JsonFileHandler {
      * @return confirmation message
      */
     public String close() {
-        if(jsonObject == null)
+        if(rawText == null)
             return "No file opened";
         jsonObject = null;
-        isSaved = false;
         filePath = null;
-        jsonParseResult = null;
+        rawText = null;
         return "File closed";
     }
 
@@ -549,14 +351,14 @@ public class JsonFileHandler {
 
         try {
             JsonElement copy = jsonObject.deepCopy();
-            completePath(pathQueue, copy);
+            copy.completePath(pathQueue);
             jsonObject = copy;
         } catch (InvalidJsonPathException e) {
             return e.getMessage();
         }
 
         try {
-            assign(parseJsonPath(path), jsonObject, null, value);
+            assign(parseJsonPath(path), jsonObject, "Main object", value);
         } catch (NotFoundException ex) {
             return ex.getMessage();
         }

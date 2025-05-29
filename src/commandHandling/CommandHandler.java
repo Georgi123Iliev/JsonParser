@@ -43,6 +43,7 @@ public class CommandHandler {
         commandHandling.put(CommandIdentifier.CREATE, new Create(jsonFileHandler));
         commandHandling.put(CommandIdentifier.CLOSE, new Close(jsonFileHandler));
 
+
     }
 
     /**

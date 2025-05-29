@@ -3,7 +3,7 @@ package src.json.types;
 /**
  * Represents a JSON {@code null} value (singleton).
  */
-public class JsonNull implements JsonElement {
+public class JsonNull extends JsonPrimitive {
 
     /** Shared instance of {@code JsonNull}. */
     public static final JsonNull INSTANCE = new JsonNull();
@@ -18,6 +18,12 @@ public class JsonNull implements JsonElement {
     public JsonElement deepCopy() {
         return this;
     }
+
+    @Override
+    public String toJson(int padding) {
+        return toString();
+    }
+
 
     /**
      * @return the string {@code "null"}
