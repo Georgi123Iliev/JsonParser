@@ -1,5 +1,6 @@
 package src.json.commands;
 
+import src.json.FileHandler;
 import src.json.JsonFileHandler;
 /**
  * Opens a JSON file and loads it into memory.
@@ -8,10 +9,10 @@ import src.json.JsonFileHandler;
 
 public class Open implements Command {
 
-    private JsonFileHandler jsonFileHandler;
+    private FileHandler fileHandler;
 
-    public Open(JsonFileHandler jsonFileHandler) {
-        this.jsonFileHandler = jsonFileHandler;
+    public Open(FileHandler fileHandler) {
+        this.fileHandler = fileHandler;
     }
 
 
@@ -29,7 +30,8 @@ public class Open implements Command {
         if(args.length!=1)
             return "Incorrect argument count";
 
-        return jsonFileHandler.openFile(args[0]);
+
+        return fileHandler.openFile(args[0]);
 
 
     }

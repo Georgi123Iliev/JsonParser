@@ -1,5 +1,6 @@
 package src.json.commands;
 
+import src.json.FileHandler;
 import src.json.JsonFileHandler;
 /**
  * Saves the current JSON document—or a subtree of it—to a new file.
@@ -10,8 +11,10 @@ import src.json.JsonFileHandler;
 public class SaveAs implements Command {
 
     private JsonFileHandler jsonFileHandler;
+    private FileHandler fileHandler;
 
-    public SaveAs(JsonFileHandler jsonFileHandler) {
+    public SaveAs(FileHandler fileHandler, JsonFileHandler jsonFileHandler) {
+        this.fileHandler = fileHandler;
         this.jsonFileHandler = jsonFileHandler;
     }
     /**
@@ -27,8 +30,11 @@ public class SaveAs implements Command {
     public String execute(String[] args)
     {
         if(args.length == 1) {
-            return jsonFileHandler.saveAs(args[0]);
-        }else if(args.length == 2) return jsonFileHandler.saveAs(args[0],args[1]);
+            return fileHandler.saveAs(jsonFileHandler.getStructuredJson());
+        }else if(args.length == 2) return fileHandler.saveAs(args[0],args[1]);
+
+
+
 
         return "Incorrect argument count";
     }

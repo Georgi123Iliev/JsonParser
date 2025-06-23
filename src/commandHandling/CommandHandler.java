@@ -1,5 +1,6 @@
 package src.commandHandling;
 
+import src.json.FileHandler;
 import src.json.commands.*;
 import src.json.JsonFileHandler;
 
@@ -20,6 +21,7 @@ public class CommandHandler {
     private final Map<CommandIdentifier, Command> commandHandling = new HashMap<>();
 
     private JsonFileHandler jsonFileHandler;
+    private FileHandler fileHandler;
 
     /**
      * Creates all command objects and registers them in the internal map.
@@ -29,19 +31,20 @@ public class CommandHandler {
     public CommandHandler()
     {
         jsonFileHandler = new JsonFileHandler();
+        fileHandler = new FileHandler();
 
-        commandHandling.put(CommandIdentifier.OPEN, new Open(jsonFileHandler));
-        commandHandling.put(CommandIdentifier.VALIDATE, new Validate(jsonFileHandler));
+        commandHandling.put(CommandIdentifier.OPEN, new Open(fileHandler));
+        commandHandling.put(CommandIdentifier.VALIDATE, new Validate(fileHandler,jsonFileHandler));
         commandHandling.put(CommandIdentifier.PRINT, new Print(jsonFileHandler));
         commandHandling.put(CommandIdentifier.SET, new Set(jsonFileHandler));
         commandHandling.put(CommandIdentifier.SEARCH, new Search(jsonFileHandler));
         commandHandling.put(CommandIdentifier.HELP, new Help());
-        commandHandling.put(CommandIdentifier.SAVE, new Save(jsonFileHandler));
-        commandHandling.put(CommandIdentifier.SAVEAS, new SaveAs(jsonFileHandler));
+        commandHandling.put(CommandIdentifier.SAVE, new Save(fileHandler, jsonFileHandler));
+        commandHandling.put(CommandIdentifier.SAVEAS, new SaveAs(fileHandler,jsonFileHandler));
         commandHandling.put(CommandIdentifier.REMOVE, new Remove(jsonFileHandler));
         commandHandling.put(CommandIdentifier.MOVE, new Move(jsonFileHandler));
         commandHandling.put(CommandIdentifier.CREATE, new Create(jsonFileHandler));
-        commandHandling.put(CommandIdentifier.CLOSE, new Close(jsonFileHandler));
+        commandHandling.put(CommandIdentifier.CLOSE, new Close(fileHandler,jsonFileHandler));
 
 
     }

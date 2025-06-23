@@ -23,40 +23,15 @@ import java.util.*;
  */
 public class JsonFileHandler {
 
-    private Path filePath;
+
     private JsonElement jsonObject;
-    private String rawText;
+
 
 
     /** Creates an empty handler with no file loaded. */
     public JsonFileHandler() {}
 
-    /**
-     * Opens a JSON file, parses it and stores the result in memory.
-     *
-     * @param fileName path to the file on disk
-     * @return empty string on success, otherwise an explanatory message
-     */
-    public String openFile(String fileName) {
 
-
-        jsonObject = null;
-        Path path = Path.of(fileName);
-
-        if (!Files.exists(path)) {
-           saveAs(fileName,new JsonObject());
-        }
-
-        try {
-            rawText = Files.readString(path);
-            filePath = path;
-
-        } catch (IOException e) {
-            return "Error reading file: " + e.getMessage();
-        }
-
-        return "File opened";
-    }
 
     /**
      * Deletes the element located at {@code jsonPath}.
@@ -202,7 +177,7 @@ public class JsonFileHandler {
      *
      * @return "Json is valid" if no parse errors were found or the stored error message otherwise
      */
-    public String validate() {
+    public String validate(String rawText) {
 
 
         JsonParseResult jsonParseResult = JsonParser.parseJson(rawText);
@@ -258,64 +233,6 @@ public class JsonFileHandler {
        return json.toJson(depth);
     }
 
-    /**
-     * Saves the whole document to {@code fileName}.
-     *
-     * @param fileName destination path
-     * @return empty string on success or error message
-     */
-    public String saveAs(String fileName) {
-        if(jsonObject == null)
-            return "No file opened";
-        return saveAs(fileName, jsonObject);
-    }
-
-    /**
-     * Saves {@code jsonObject} to {@code fileName}.
-     *
-     * @param fileName destination path
-     * @param jsonObject subtree to write
-     * @return empty string on success or error message
-     */
-    private String saveAs(String fileName, JsonElement jsonObject) {
-        Path path = Path.of(fileName);
-        try {
-            try {
-                Files.createFile(path);
-            } catch (FileAlreadyExistsException ignored) {
-            }
-            Files.writeString(path, formatStructuredJson(jsonObject, 0));
-        } catch (IOException e) {
-            return "Error reading file: " + e.getMessage();
-        }
-
-        return "File saved";
-    }
-
-    /**
-     * Writes the subtree at {@code path} to {@code fileName}.
-     *
-     * @param fileName target path
-     * @param path     JSON path inside the current document
-     * @return result message
-     */
-    public String saveAs(String fileName, String path) {
-       if(rawText == null)
-           return "No file opened";
-
-        if(jsonObject == null)
-            return "Json not validated";
-        
-        JsonElement jsonElement;
-        try {
-            jsonElement = jsonObject.getValueAt(parseJsonPath(path), "Main object");
-        } catch (NotFoundException ex) {
-            return ex.getMessage();
-        }
-        return saveAs(fileName, jsonElement);
-    }
-
-
 
     /**
      * Closes the file and clears the in-memory state.
@@ -323,11 +240,9 @@ public class JsonFileHandler {
      * @return confirmation message
      */
     public String close() {
-        if(rawText == null)
+        if(jsonObject == null)
             return "No file opened";
         jsonObject = null;
-        filePath = null;
-        rawText = null;
         return "File closed";
     }
 
@@ -366,12 +281,5 @@ public class JsonFileHandler {
         return "Element created";
     }
 
-    /**
-     * Saves the document to the originally opened file.
-     *
-     * @return empty string on success or error message
-     */
-    public String save() {
-        return filePath != null ? saveAs(filePath.toString()) : "No file open";
-    }
+
 }

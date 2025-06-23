@@ -7,7 +7,7 @@ import src.json.JsonFileHandler;
  */
 public class Create implements Command {
 
-    JsonFileHandler jsonFileHandler;
+   private JsonFileHandler jsonFileHandler;
 
     public Create(JsonFileHandler jsonFileHandler) {
         this.jsonFileHandler = jsonFileHandler;

@@ -1,5 +1,6 @@
 package src.json.commands;
 
+import src.json.FileHandler;
 import src.json.JsonFileHandler;
 /**
  * Saves the currently-open JSON document back to its original file.
@@ -7,8 +8,9 @@ import src.json.JsonFileHandler;
 public class Save implements Command {
 
     private JsonFileHandler jsonFileHandler;
-
-    public Save(JsonFileHandler jsonFileHandler) {
+    private FileHandler fileHandler;
+    public Save(FileHandler fileHandler, JsonFileHandler jsonFileHandler) {
+        this.fileHandler = fileHandler;
         this.jsonFileHandler = jsonFileHandler;
     }
     /**
@@ -24,6 +26,6 @@ public class Save implements Command {
             return "Incorrect argument count";
         }
 
-        return jsonFileHandler.save();
+        return fileHandler.save(jsonFileHandler.getStructuredJson());
     }
 }

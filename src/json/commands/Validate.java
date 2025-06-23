@@ -1,5 +1,6 @@
 package src.json.commands;
 
+import src.json.FileHandler;
 import src.json.JsonFileHandler;
 /**
  * Validates the syntax of the currently-opened JSON file.
@@ -10,10 +11,12 @@ import src.json.JsonFileHandler;
 
 public class Validate implements Command {
 
-    JsonFileHandler jsonFileHandler;
+   private JsonFileHandler jsonFileHandler;
+   private FileHandler fileHandler;
 
-    public Validate(JsonFileHandler jsonFileHandler) {
+    public Validate(FileHandler fileHandler, JsonFileHandler jsonFileHandler) {
         this.jsonFileHandler = jsonFileHandler;
+        this.fileHandler = fileHandler;
     }
 
     /**
@@ -28,6 +31,10 @@ public class Validate implements Command {
         if(args.length != 0)
             return "Incorrect argument count";
 
-       return jsonFileHandler.validate();
+
+
+
+
+       return jsonFileHandler.validate(fileHandler.getRawText());
     }
 }
